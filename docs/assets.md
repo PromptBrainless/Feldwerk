@@ -26,7 +26,7 @@ Der oberste Ordner entscheidet die Palette. Wasser 1×1 ist Boden und blockiert.
 | `bauteile` | Deko | fest |
 | `props` | Deko | nicht fest |
 
-Die Palette **Dorf** sind nur die acht eingebauten Dinge (Baum, Busch, Blumen, Fels, Zaun, Haus, Schild, Brunnen). **Alle** ist der Dorfkatalog. **Eigene** sind Uploads.
+Die Palette **Dorf** sind nur die acht eingebauten Dinge (Baum, Busch, Blumen, Fels, Zaun, Haus, Schild, Brunnen). **Alle** ist der Dorfkatalog. **Leiste** sind die 100 Aliase L001–L100 auf vorhandene Dateien (`src/rpg/view/katalog.ts`). **Eigene** sind Uploads.
 
 ## Leiste
 
