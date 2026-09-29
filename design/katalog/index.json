@@ -1,0 +1,15 @@
+{
+  "projekt": "feldwerk",
+  "t": 64,
+  "objectalignment": "bottom",
+  "origin": { "x": 0.5, "y": 1.0 },
+  "join": "python3 design/katalog/join.py",
+  "item_count": 100,
+  "bloecke": [
+    { "block": "A", "name": "haeuser", "datei": "design/katalog/block-a-haeuser.json", "count": 20, "ids": ["L001", "L020"] },
+    { "block": "B", "name": "wege", "datei": "design/katalog/block-b-wege.json", "count": 18, "ids": ["L021", "L038"] },
+    { "block": "C", "name": "stadt", "datei": "design/katalog/block-c-stadt.json", "count": 18, "ids": ["L039", "L056"] },
+    { "block": "D", "name": "wald", "datei": "design/katalog/block-d-wald.json", "count": 22, "ids": ["L057", "L078"] },
+    { "block": "E", "name": "pflanzen", "datei": "design/katalog/block-e-pflanzen.json", "count": 22, "ids": ["L079", "L100"] }
+  ]
+}

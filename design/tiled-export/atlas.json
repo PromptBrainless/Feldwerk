@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "t": 64,
+    "objectalignment": "bottom",
+    "copied": 0,
+    "missing_count": 100,
+    "tilesets": { "boden": "boden_64.tsx", "objekte": "objekte_64.tsx" }
+  },
+  "hinweis": "Items liegen in shards/atlas-*.json",
+  "items": []
+}

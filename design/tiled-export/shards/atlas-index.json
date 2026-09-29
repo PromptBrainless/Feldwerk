@@ -1,0 +1,13 @@
+{
+  "t": 64,
+  "objectalignment": "bottom",
+  "copied": 0,
+  "missing_count": 100,
+  "shards": [
+    { "block": "A", "datei": "atlas-a-haeuser.json", "count": 20 },
+    { "block": "B", "datei": "atlas-b-wege.json", "count": 18 },
+    { "block": "C", "datei": "atlas-c-stadt.json", "count": 18 },
+    { "block": "D", "datei": "atlas-d-wald.json", "count": 22 },
+    { "block": "E", "datei": "atlas-e-pflanzen.json", "count": 22 }
+  ]
+}
