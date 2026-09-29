@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108" role="img" aria-label="Feldwerk Mark">
+  <rect width="108" height="108" rx="24" fill="#0E1016"/>
+  <g fill="#EBE8F4">
+    <rect x="18" y="18" width="15" height="15" rx="2"/>
+    <rect x="39" y="18" width="15" height="15" rx="2"/>
+    <rect x="60" y="18" width="15" height="15" rx="2"/>
+    <rect x="81" y="18" width="15" height="15" rx="2"/>
+    <rect x="18" y="39" width="15" height="15" rx="2"/>
+    <rect x="39" y="39" width="15" height="15" rx="2"/>
+    <rect x="60" y="39" width="15" height="15" rx="2"/>
+    <rect x="81" y="39" width="15" height="15" rx="2"/>
+    <rect x="18" y="60" width="15" height="15" rx="2"/>
+    <rect x="39" y="60" width="15" height="15" rx="2"/>
+    <rect x="60" y="60" width="15" height="15" rx="2"/>
+    <rect x="81" y="60" width="15" height="15" rx="2"/>
+    <rect x="18" y="81" width="15" height="15" rx="2"/>
+    <rect x="39" y="81" width="15" height="15" rx="2"/>
+    <rect x="60" y="81" width="15" height="15" rx="2"/>
+  </g>
+  <rect x="81" y="81" width="15" height="15" rx="2" fill="#6D5EFC"/>
+</svg>

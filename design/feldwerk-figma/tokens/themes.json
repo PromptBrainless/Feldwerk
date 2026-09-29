@@ -1,0 +1,11 @@
+[
+  {
+    "id": "feldwerk-app",
+    "name": "Feldwerk / App",
+    "selectedTokenSets": {
+      "global": "source",
+      "app": "enabled"
+    },
+    "group": "Feldwerk"
+  }
+]

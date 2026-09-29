@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>Feldwerk — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --parchment:#0E1016; --deep:#1A1D28; --panel:#141722;
+    --ink:#EBE8F4; --soft:#A39EB8; --moss:#6D5EFC; --gold:#C4B5FD; --line:#2C3142;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--parchment); color:var(--ink); font-family:Outfit,sans-serif; }
+  header { padding:32px 40px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; }
+  h1 { font-family:Fraunces,serif; margin:0; font-size:36px; font-weight:600; }
+  .sub { color:var(--soft); }
+  main { padding:32px 40px 64px; display:grid; gap:32px; }
+  .swatches { display:flex; flex-wrap:wrap; gap:12px; }
+  .swatch { width:120px; }
+  .chip { height:56px; border-radius:12px; border:1px solid var(--line); }
+  code { font-size:11px; color:var(--soft); }
+  .pill { display:inline-block; padding:8px 16px; border-radius:999px; background:var(--moss); color:var(--ink); font-weight:500; margin-right:8px; }
+  .pill.off { background:transparent; border:1px solid var(--line); }
+  .panel { background:var(--panel); border-radius:16px; padding:20px; }
+</style>
+</head>
+<body>
+<header>
+  <svg width="48" height="48" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg"><rect width="108" height="108" rx="24" fill="#0E1016"/><g fill="#EBE8F4"><rect x="18" y="18" width="15" height="15" rx="2"/><rect x="39" y="18" width="15" height="15" rx="2"/><rect x="60" y="18" width="15" height="15" rx="2"/><rect x="81" y="18" width="15" height="15" rx="2"/><rect x="18" y="39" width="15" height="15" rx="2"/><rect x="39" y="39" width="15" height="15" rx="2"/><rect x="60" y="39" width="15" height="15" rx="2"/><rect x="81" y="39" width="15" height="15" rx="2"/><rect x="18" y="60" width="15" height="15" rx="2"/><rect x="39" y="60" width="15" height="15" rx="2"/><rect x="60" y="60" width="15" height="15" rx="2"/><rect x="81" y="60" width="15" height="15" rx="2"/><rect x="18" y="81" width="15" height="15" rx="2"/><rect x="39" y="81" width="15" height="15" rx="2"/><rect x="60" y="81" width="15" height="15" rx="2"/></g><rect x="81" y="81" width="15" height="15" rx="2" fill="#6D5EFC"/></svg>
+  <div>
+    <h1>Feldwerk</h1>
+    <div class="sub">feldwerk.grok.me · T = 64 · 20 × 14 · Spielen / Zeichnen</div>
+  </div>
+</header>
+<main>
+  <section>
+    <div class="pill">Spielen</div>
+    <div class="pill off">Zeichnen</div>
+    <div class="pill">Anger</div>
+    <div class="pill off">Teich</div>
+    <div class="pill off">Stube</div>
+  </section>
+  <section>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#0E1016"></div><code>parchment</code></div>
+      <div class="swatch"><div class="chip" style="background:#141722"></div><code>panel</code></div>
+      <div class="swatch"><div class="chip" style="background:#6D5EFC"></div><code>moss</code></div>
+      <div class="swatch"><div class="chip" style="background:#C4B5FD"></div><code>gold</code></div>
+      <div class="swatch"><div class="chip" style="background:#EBE8F4"></div><code>ink / canvas</code></div>
+      <div class="swatch"><div class="chip" style="background:#A39EB8"></div><code>ink-soft</code></div>
+    </div>
+  </section>
+  <section class="panel">
+    Statusleiste: Bereit · Anger · 64 px<br/>
+    Zeichnen: Pinsel Radierer Sperre Hand · Boden Objekte · 610 Bilder
+  </section>
+</main>
+</body>
+</html>

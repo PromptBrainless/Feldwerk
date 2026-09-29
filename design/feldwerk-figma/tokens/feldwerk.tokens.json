@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schemas.tokens.studio/latest/tokens.json",
+  "global": {
+    "color": {
+      "parchment": { "$value": "#0E1016", "$type": "color" },
+      "parchment-deep": { "$value": "#1A1D28", "$type": "color" },
+      "panel": { "$value": "#141722", "$type": "color" },
+      "ink": { "$value": "#EBE8F4", "$type": "color" },
+      "ink-soft": { "$value": "#A39EB8", "$type": "color" },
+      "moss": { "$value": "#6D5EFC", "$type": "color" },
+      "gold": { "$value": "#C4B5FD", "$type": "color" },
+      "walnut": { "$value": "#6D5EFC", "$type": "color" },
+      "line": { "$value": "#2C3142", "$type": "color" },
+      "map-void": { "$value": "#EBE8F4", "$type": "color" },
+      "error": { "$value": "#B3261E", "$type": "color" }
+    },
+    "space": {
+      "1": { "$value": "4", "$type": "spacing" },
+      "2": { "$value": "8", "$type": "spacing" },
+      "3": { "$value": "12", "$type": "spacing" },
+      "4": { "$value": "16", "$type": "spacing" },
+      "6": { "$value": "24", "$type": "spacing" },
+      "8": { "$value": "32", "$type": "spacing" },
+      "tile": { "$value": "64", "$type": "spacing" }
+    },
+    "radius": {
+      "sm": { "$value": "8", "$type": "borderRadius" },
+      "md": { "$value": "12", "$type": "borderRadius" },
+      "lg": { "$value": "16", "$type": "borderRadius" },
+      "pill": { "$value": "999", "$type": "borderRadius" }
+    },
+    "font": {
+      "family": {
+        "brand": { "$value": "Fraunces", "$type": "fontFamilies" },
+        "ui": { "$value": "Outfit", "$type": "fontFamilies" }
+      },
+      "weight": {
+        "regular": { "$value": "400", "$type": "fontWeights" },
+        "medium": { "$value": "500", "$type": "fontWeights" },
+        "semibold": { "$value": "600", "$type": "fontWeights" }
+      }
+    },
+    "grid": {
+      "tile": { "$value": "64", "$type": "sizing" },
+      "map-cols": { "$value": "20", "$type": "other" },
+      "map-rows": { "$value": "14", "$type": "other" }
+    },
+    "meta": {
+      "product": { "$value": "Feldwerk", "$type": "other" },
+      "url": { "$value": "https://feldwerk.grok.me", "$type": "other" },
+      "modes": { "$value": "Spielen, Zeichnen", "$type": "other" },
+      "maps": { "$value": "Anger, Teich, Stube", "$type": "other" }
+    }
+  },
+  "app": {
+    "theme": {
+      "primary": { "$value": "{color.moss}", "$type": "color" },
+      "on-primary": { "$value": "{color.ink}", "$type": "color" },
+      "background": { "$value": "{color.parchment}", "$type": "color" },
+      "surface": { "$value": "{color.panel}", "$type": "color" },
+      "on-surface": { "$value": "{color.ink}", "$type": "color" },
+      "muted": { "$value": "{color.ink-soft}", "$type": "color" },
+      "outline": { "$value": "{color.line}", "$type": "color" },
+      "canvas": { "$value": "{color.map-void}", "$type": "color" }
+    }
+  }
+}
