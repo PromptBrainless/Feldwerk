@@ -15,47 +15,33 @@ Behalte funktionierende Features bei und verbessere sie.
 Keine Fake-Buttons, keine leeren Platzhalterseiten und keine rein dekorativen Mockups.
 Jede sichtbare Funktion soll tatsächlich funktionieren oder einen klaren, sinnvoll vorbereiteten Zustand besitzen.
 
-Siehe die 35 Abschnitte im extrahierten Prompt:
+## Wo der Prompt liegt
 
-1. Ziel — Game Creation Studio / Playground / Mini-Engine / Canvas-Editor / AI Workspace / Asset Hub
-2. Visuelle Identität — Spark, Blau→Violett, premium creative tool, keine Neon-/Glass-Slop
-3. App Shell — Topbar, Sidebar, Workspace, Inspector, Statusbar
-4. Top Bar — Logo, Szene, Modes PLAY/BUILD/DRAW/WORLD/ASSETS, Undo/Redo/Save/Preview/Settings, Save-Status
-5. Left Sidebar — CORE / CREATE / PROJECT / SYSTEM, collapsible
-6. Command Palette — Ctrl/Cmd+K
-7. Main Workspace — PLAY / DRAW / BUILD / WORLD
-8. Context Toolbar — progressive disclosure
-9. Right Inspector — objektbezogen, collapsible
-10. Object Creation — + Add, Click → Objekt im Workspace
-11. Asset Browser — Tabs, Search, DnD
-12. Scene Manager
-13. Layers
-14. Search — Ctrl/Cmd+K und /
-15. Settings
-16. Shortcuts
-17. Bottom Status Bar
-18. Floating Actions — nur + Add oder Preview
-19. Toast System inkl. Undo
-20. Modals / Sheets
-21. Responsive Design
-22. Motion 150–220ms, prefers-reduced-motion
-23. Accessibility
-24. Empty States
-25. Loading / Error States
-26. Design Tokens
-27. Brand — Spark als Micro-Element
-28. AI / Reden — Creative Assistant mit Apply/Cancel
-29. Tool System — id/name/icon/shortcut/category/execute/canExecute
-30. Performance
-31. Mobile first-class
-32. Quality Bar — fertiges Produkt, keine Fake-Buttons
-33. Phasen 1–12
-34. Nicht überdesignen
-35. Abschluss-Check
+| Abschnitt | Datei |
+| --- | --- |
+| Leitentscheidungen, Shell, Modi, HUD | [README.md](./README.md), [kontext-hud.md](./kontext-hud.md) |
+| Phasen 1–12 und Quality Bar | [phasenplan.md](./phasenplan.md) |
+| Abschnitte 18–35 im Originalwortlaut | [master-prompt-teil-2.md](./master-prompt-teil-2.md) |
+| Share-Provenienz | [../quellen/chatgpt-hud-ui-share.md](../quellen/chatgpt-hud-ui-share.md) |
 
-Der vollständige Fließtext der Abschnitte 1–35 steht lokal im Workspace-Artefakt und wird im nächsten Commit 1:1 nachgezogen, falls dieser Platzhalter die Gateway-Grenze trifft.
+## Abschnitte 1–17 (Arbeitsfassung)
 
-Arbeitskopie der strukturierten Fassung:
-- docs/hud-ui/README.md
-- docs/hud-ui/kontext-hud.md
-- docs/hud-ui/phasenplan.md
+1. **Ziel** — Mischung aus Game Creation Studio, Playground, Mini-Engine, Canvas/Level-Editor, AI Workspace, Asset Hub. Keine gewöhnliche Website.
+2. **Visuelle Identität** — vierzackiger Spark, Blau→Violett, leichtes Glow, dunkle ruhige Fläche. Premium creative tool, kein generic AI dashboard, kein Neon-/Glass-Slop.
+3. **App Shell** — Topbar + Sidebar + Workspace + Inspector + Statusbar. Mobile: Drawer / Bottom Sheet, Touch ≥ 44px.
+4. **Top Bar** — Logo, Szene, Modes PLAY/BUILD/DRAW/WORLD/ASSETS, Undo/Redo/Save/Preview/Settings/Help, Saved/Unsaved/Saving.
+5. **Sidebar** — CORE (Play/Build/Draw/World), CREATE, PROJECT, SYSTEM. Collapsible, aktiver Punkt mit Blau/Violett-Akzent.
+6. **Command Palette** — Ctrl/Cmd+K. Pages/Tools/Objects/Actions/Assets. Pfeile, Enter, Esc.
+7. **Workspace** — PLAY (Pause/Restart/Debug/Fullscreen), DRAW (Pen/Eraser/Select/Move/Shape/Fill/Text), BUILD (Grid/Snap/Transform), WORLD (Scene/Layers/Objects/Environment).
+8. **Context Toolbar** — nichts gewählt / ein Objekt / mehrere Objekte. Keine 30 Buttons.
+9. **Inspector** — Name/Type, Transform, Appearance, Behavior, Advanced. Leer: Select an object.
+10. **Object Creation** — + Add, Klick erzeugt Objekt direkt.
+11. **Asset Browser** — Tabs, Search/Filter/Sort, Grid/List, Favorites, DnD.
+12. **Scene Manager** — New/Duplicate/Rename/Delete/Reorder/Preview.
+13. **Layers** — UI/FX/Objects/Characters/Environment/Background, visibility/lock/reorder.
+14. **Search** — Ctrl/Cmd+K und optional `/`.
+15. **Settings** — General/Appearance/Controls/Editor/Audio/Performance/Accessibility/Shortcuts.
+16. **Shortcuts** — Z/Shift+Z, S, Delete, D, Space, Esc, F, 1–4.
+17. **Statusbar** — Ready · Scene/Objects/Selected · Zoom/Grid/FPS.
+
+Originalwortlaut 18–35: [master-prompt-teil-2.md](./master-prompt-teil-2.md).
