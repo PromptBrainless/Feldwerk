@@ -1,0 +1,68 @@
+Der Systemprompt ist zerlegt und als lauffähiges GitHub-Repo angelegt:
+
+**https://github.com/PromptBrainless/rpgmaker**
+
+## Zerlegung des Systemprompts
+
+Der Text ist kein einzelner Befehl, sondern fünf Schichten. Andere Umgebungen sollen genau so damit umgehen.
+
+1. **Rolle** — ein Produkt: Editor + Player als eine Android-APK, sideload an Freunde, keine Stores.
+2. **Grenzen** — nur Android. iOS/Desktop dürfen keine Architekturentscheidung ziehen. Plugin-Sicherheit darf pragmatisch sein, Datenverlust nicht.
+3. **Arbeitsvertrag** — Entwurf vor Code, ADR max. 15 Zeilen, kleine buildbare Schritte, keine erfundenen Versionen, `runtime/` kennt `editor/` nicht, Abschluss immer: geändert / getestet / offen.
+4. **Technik** — eine Web-Codebasis, APK über Capacitor. PixiJS rendert, Preact ist der Editor, JSON+Schema ist das Projektformat.
+5. **Reihenfolge** — M0 Fundament → M1 Durchstich → M2 Events/DB → M3 Kampf → M4 Plugins → M5 Chargen/Assets → M6 Einzelspiel-APK.
+
+Daraus folgen drei harte Regeln für jeden Agenten (Codespace, Actions, Grok, Copilot):
+
+- Versionen nur aus offizieller Doku oder `package.json`.
+- Kein zweiter Stack „nebenbei“. Native Runtime nur nach eigenem ADR, falls M1 die 60 FPS verfehlt.
+- Der Hauptzweig muss eine APK erzeugen können. Kaputte Zwischenstände gehören nicht auf `main`.
+
+## Was im Repo liegt
+
+| Teil | Zweck |
+|---|---|
+| `docs/projektanweisungen.md` + `AGENTS.md` | Systemprompt für andere Umgebungen |
+| `docs/adr/001–003` | Stack, Projektformat, APK/Signierung |
+| `.devcontainer/` | Codespace: Node 22, JDK 21 |
+| `.github/workflows/` | `test.yml` bei Push, `build-apk.yml` per Button/Tag |
+| `src/app`, `src/editor`, `src/runtime`, `src/shared` | Trennung wie vorgeschrieben |
+| Kernklassen | `GameState`, `EventInterpreter`, `TilemapRenderer`, `PluginHost`, `BattleSystem` |
+| Schemas + Beispielprojekt | Map/Event/DB/Projekt, `templates/example-project/` |
+| Issues #1–#7 | M0–M6 als Tickets |
+
+Festgezogene Versionen (npm, Sept. 2026): Capacitor **8.5.2**, Node **≥ 22**, TypeScript **5.9.3** (nicht 7, weil `typescript-eslint@8.70.1` nur `<6.1.0` erlaubt), Vite **8.3.1**, Vitest **5.0.2**, Preact **10.29.8**, PixiJS **8.21.0**. Android laut Capacitor-8-Doku: minSdk 24, compile/target **36**, JDK **21**.
+
+## In einer anderen Umgebung starten
+
+```bash
+git clone https://github.com/PromptBrainless/rpgmaker.git
+cd rpgmaker
+npm install
+npm test
+npm run dev
+```
+
+APK (einmalig Android-Plattform anlegen, danach committen):
+
+```bash
+npx cap add android
+npm run apk:debug
+```
+
+Oder auf GitHub: Action **build-apk** → `workflow_dispatch`. Anleitung: `docs/build.md`.
+
+## Getestet / offen
+
+**Geändert:** öffentliches Repo `PromptBrainless/rpgmaker`, M0-Gerüst, ADRs, CI, Devcontainer, Agent-Dateien.
+
+**Getestet:** Dateibaum auf GitHub geprüft (81 Dateien). Lokales `npm test` in dieser Sandbox war unvollständig (Install hing, kein `package-lock.json` ins Repo gelegt). CI installiert deshalb per `npm ci` *oder* `npm install`.
+
+**Offen (M0 noch nicht grün):**
+
+- `android/` existiert noch nicht — erstes `npx cap add android` und Commit, Issue [#1](https://github.com/PromptBrainless/rpgmaker/issues/1)
+- `package-lock.json` nach dem ersten sauberen `npm install` committen
+- Debug-APK einmal sideloaden
+- optional eigener Keystore nur als GitHub-Secret, nie ins Repo
+
+Nächster sinnvoller Schritt: Issue #1 abschließen, danach M1 (Karte zeichnen → Figur läuft mit Kollision).
