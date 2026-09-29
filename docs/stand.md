@@ -12,6 +12,10 @@ Pause nach der ersten spielbaren Werkstatt. Kein Ersatz für den [HUD-Master-Pro
 - Speichern lokal, ein Slot, `world: 3`. Auth und Datenbank sind aus.
 - Beispielstadt bleibt der Testort hinter dem Rücksetzen-Knopf. `buildTown()` nicht umbauen, die Logiktests hängen daran.
 
+## Schnittkacheln (noch nicht im Glob)
+
+233 PNGs T=64 unter `design/kachel-leiste/` (Houses_Pack, MiniPack, Gentle, Serene). Kontrolle: `design/kachel-leiste/kontrolltabelle.md`. Nicht in die Mitte von `src/rpg/assets/dorf/` schieben.
+
 ## HUD-Phasen
 
 Quelle der Reihenfolge: [phasenplan.md](./hud-ui/phasenplan.md). Nicht alles auf einmal nachziehen.
