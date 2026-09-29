@@ -6,7 +6,7 @@ Pause nach der ersten spielbaren Werkstatt. Kein Ersatz für den [HUD-Master-Pro
 
 - Modi **Spielen**, **Zeichnen**, **Reden**. Reden liest den Spruch der Zelle vor der Figur (Leertaste, Enter, E, oder der Knopf auf dem Handy). Der Creative Assistant mit Apply/Cancel ist nicht gebaut.
 - Drei Orte in der Leiste: Anger, Teich, Stube. Details in [Spielwelt](./spielwelt.md).
-- Zeichenpalette mit Gruppen und **Alle** (473 Dorfbilder, nur der sichtbare Ausschnitt). Regeln in [Assets](./assets.md).
+- Zeichenpalette mit Gruppen, **Alle** (473 Dorfbilder, nur der sichtbare Ausschnitt) und **Leiste** (L001–L100 als Aliase). Regeln in [Assets](./assets.md) und [Katalog](./katalog.md).
 - Dunkle Fläche, vierzackiger Spark, Akzent Blau→Violett (`#6d5efc` / `#c4b5fd`). Die Karte selbst bleibt warm (`#f4efe4`).
 - Kollision im Spiel ist ein kurzer Farbblitz, kein Wegschieben. Im Zeichnen ein violetter Schleier, keine Kreuze. Siehe [Spielwelt](./spielwelt.md).
 - Speichern lokal, ein Slot, `world: 3`. Auth und Datenbank sind aus.
