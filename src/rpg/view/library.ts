@@ -10,6 +10,13 @@ export type CustomBrush = {
   w: number;
   h: number;
   src: string;
+  pivot_px?: number;
+  pivot_py?: number;
+  stand_b?: number;
+  stand_s?: number;
+  tuer_dx?: number | null;
+  tuer_dy?: number | null;
+  objectalignment?: "bottom";
 };
 
 function openDb(): Promise<IDBDatabase> {
