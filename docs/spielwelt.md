@@ -1,8 +1,16 @@
 # Spielwelt
 
-Drei kleine Orte, ein Speicherplatz, Kollision als Farbe. Die Karten stehen in `src/rpg/view/places.ts` und werden über `buildPlace` neu aufgebaut, nicht aus Dateinamen geraten. Welche Bilder wirklich Häuser, Bäume oder Rohre sind: [Assets](./assets.md).
+Fünf Orte, ein Speicherplatz, Kollision als Farbe. Die Karten stehen in `src/rpg/view/places.ts`. Startzelle ist `{x: 4, y: 8}` und muss frei bleiben. Beim Öffnen liegt die **Stadt** vorn, nicht mehr der Anger.
 
-Startzelle aller drei Orte ist `{x: 4, y: 8}`. Die Zelle muss frei bleiben.
+## Stadt
+
+24×16. Lichtung aus dem neuen Gras, Erdweg in der Mitte, Pflaster unten, Waldrand aus Hecken oben und rechts. Vier neue Häuser (rot, rot, grün, blau). Pflanzen auf der Lichtung blockieren nur die großen Büsche.
+
+Die Holzschwelle vor dem linken Haus, Zellen (1, 9) und (2, 9), ist eine Tür: Wer sie betritt, steht in der Kammer. Anger, Teich und Stube bleiben über die Ortsknöpfe erreichbar.
+
+## Kammer
+
+16×12, Parkett, Ziegelwand. Zimmerpflanzen an den Wänden. Die Diele nach Süden, Zellen (4, 11) und (5, 11), führt zurück in die Stadt.
 
 ## Anger
 
@@ -35,7 +43,7 @@ Blumen und alles mit `solid: false` (Steg, Rahmen, Wiesen-Tiere) lassen sich dur
 
 ## Speicher
 
-Ein Slot, `feldwerk-town-v2`, Feld `world: 3`. Ein älterer Stand mit dem Namen Anger, Teich, Stube oder Beispielstadt wird nicht zurückgeladen, damit die neuen Orte nicht von einem alten Entwurf verdeckt werden. Eine selbst umbenannte Karte bleibt erhalten. Ein Ort aus der Leiste baut die Karte neu und überschreibt den Slot.
+Ein Slot, `feldwerk-town-v2`, Feld `world: 4`. Ein älterer Stand mit dem Namen Stadt, Kammer, Anger, Teich, Stube oder Beispielstadt wird nicht zurückgeladen, damit die neue Stadt nicht von einem alten Anger verdeckt wird. Eine selbst umbenannte Karte bleibt erhalten. Ein Ort aus der Leiste baut die Karte neu und überschreibt den Slot.
 
 ## Beispielstadt
 

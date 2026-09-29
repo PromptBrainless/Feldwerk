@@ -4,9 +4,11 @@ import { START } from "../runtime/town.ts";
 import { dorfBrush } from "./dorf.ts";
 import type { StockBrush } from "./stock.ts";
 
-export type PlaceId = "anger" | "teich" | "stube";
+export type PlaceId = "stadt" | "kammer" | "anger" | "teich" | "stube";
 
 export const PLACES: { id: PlaceId; label: string }[] = [
+  { id: "stadt", label: "Stadt" },
+  { id: "kammer", label: "Kammer" },
   { id: "anger", label: "Anger" },
   { id: "teich", label: "Teich" },
   { id: "stube", label: "Stube" },
@@ -87,10 +89,98 @@ function prop(map: TownMap, x: number, y: number, fileName: string, solid: boole
   }
 }
 
+function portal(map: TownMap, x: number, y: number, to: PlaceId) {
+  map.exits = map.exits ?? {};
+  map.exits[`${x},${y}`] = to;
+}
+
 function finish(map: TownMap) {
   normalizeMap(map);
   if (isBlocked(map, START.x, START.y)) throw new Error(`${map.name}: Start ist zu`);
   return map;
+}
+
+function stadt(): TownMap {
+  const map = blank("stadt", "Stadt", 24, 16, "boden_lichtung_gras_1x1_64x64_01.png");
+  fill(map, 0, 2, 3, 4, "boden_lichtung_gras_1x1_64x64_02.png");
+  fill(map, 6, 2, 14, 4, "boden_lichtung_gras_1x1_64x64_03.png");
+  fill(map, 15, 2, 21, 4, "boden_lichtung_gras_1x1_64x64_02.png");
+  fill(map, 4, 0, 5, 8, "boden_wege_erde_1x1_64x64_04.png");
+  fill(map, 0, 9, 23, 15, "boden_stadt_pflaster_1x1_64x64_01.png");
+  fill(map, 8, 11, 14, 13, "boden_stadt_pflaster_1x1_64x64_02.png");
+  fill(map, 16, 12, 20, 14, "boden_stadt_pflaster_1x1_64x64_04.png");
+  ground(map, 0, 9, "boden_stadt_pflaster_1x1_64x64_10.png");
+  ground(map, 23, 9, "boden_stadt_pflaster_1x1_64x64_10.png");
+  ground(map, 0, 15, "boden_stadt_pflaster_1x1_64x64_05.png");
+  ground(map, 23, 15, "boden_stadt_pflaster_1x1_64x64_05.png");
+  ground(map, 1, 9, "boden_wege_holz_1x1_64x64_01.png");
+  ground(map, 2, 9, "boden_wege_holz_1x1_64x64_01.png");
+  portal(map, 1, 9, "kammer");
+  portal(map, 2, 9, "kammer");
+
+  for (const x of [0, 2, 6, 8, 10, 12, 14, 16, 18, 20, 22]) {
+    const file =
+      x % 8 === 0
+        ? "natur_waldrand_hecke_2x2_128x128_01.png"
+        : x % 8 === 2
+          ? "natur_waldrand_hecke_2x2_128x128_02.png"
+          : x % 8 === 4
+            ? "natur_waldrand_hecke_2x2_128x128_03.png"
+            : "natur_waldrand_hecke_2x2_128x128_04.png";
+    prop(map, x, 0, file, true);
+  }
+  prop(map, 22, 4, "natur_waldrand_hecke_2x2_128x128_02.png", true);
+  prop(map, 22, 6, "natur_waldrand_hecke_2x2_128x128_03.png", true);
+  prop(map, 22, 8, "natur_waldrand_hecke_2x2_128x128_04.png", true);
+  prop(map, 22, 10, "natur_waldrand_hecke_2x2_128x128_01.png", true);
+  prop(map, 22, 12, "natur_waldrand_hecke_2x2_128x128_02.png", true);
+
+  prop(map, 1, 5, "gebaeude_haus_serene_2x4_128x256_06.png", true, "Das rote Häuschen. Die Holzschwelle davor öffnet die Kammer.");
+  prop(map, 7, 5, "gebaeude_haus_serene_3x4_192x256_04.png", true, "Frischer Putz. Nach Norden geht es durch die Lichtung in den Wald.");
+  prop(map, 11, 5, "gebaeude_haus_serene_4x4_256x256_09.png", true, "Grünes Dach, grauer Sockel.");
+  prop(map, 16, 5, "gebaeude_haus_serene_5x4_320x256_10.png", true, "Das blaue Haus steht am Waldrand.");
+  prop(map, 2, 3, "props_pflanze_1x1_64x64_01.png", false);
+  prop(map, 6, 3, "props_pflanze_1x1_64x64_12.png", false);
+  prop(map, 8, 2, "props_pflanze_2x2_128x128_22.png", true);
+  prop(map, 13, 2, "props_pflanze_2x2_128x128_26.png", true);
+  prop(map, 19, 3, "props_pflanze_1x1_64x64_16.png", false);
+  prop(map, 9, 4, "props_pflanze_1x1_64x64_09.png", false);
+  prop(map, 6, 10, "dorf_1x2_64x128_03.png", true, "Stadt. Links auf die Holzschwelle treten, dann bist du in der Kammer.");
+  prop(map, 8, 11, "figuren_buerger_anim_lauf_1x2_64x128_16.png", true, "Das Pflaster ist neu. Hinter den Hecken fängt der Wald an.");
+  prop(map, 12, 13, "figuren_tier_1x1_64x64_01.png", false, "Das Schaf bleibt auf dem Pflaster.");
+  prop(map, 18, 12, "figuren_tier_1x1_64x64_18.png", false);
+  return finish(map);
+}
+
+function kammer(): TownMap {
+  const map = blank("kammer", "Kammer", 16, 12, "boden_natur_parkett_a_1x1_64x64_01.png");
+  const wall = "boden_natur_ziegel_dunkel_1x1_64x64_01.png";
+  blockGround(map, wall);
+  fill(map, 0, 0, 15, 0, wall);
+  fill(map, 0, 11, 15, 11, wall);
+  fill(map, 0, 0, 0, 11, wall);
+  fill(map, 15, 0, 15, 11, wall);
+  fill(map, 4, 8, 5, 11, "boden_natur_dielen_1x1_64x64_01.png");
+  portal(map, 4, 11, "stadt");
+  portal(map, 5, 11, "stadt");
+
+  prop(map, 1, 1, "moebel_zimmer_pflanze_1x2_64x128_02.png", true, "Die Palme steht am Fenster.");
+  prop(map, 3, 1, "moebel_zimmer_pflanze_1x1_64x64_03.png", false);
+  prop(map, 6, 1, "moebel_zimmer_pflanze_1x1_64x64_07.png", false);
+  prop(map, 8, 1, "moebel_zimmer_pflanze_2x2_128x128_11.png", true, "Der Farn will feucht bleiben.");
+  prop(map, 11, 1, "moebel_zimmer_pflanze_2x2_128x128_02.png", true);
+  prop(map, 13, 1, "moebel_zimmer_pflanze_2x1_128x64_03.png", true);
+  prop(map, 1, 5, "moebel_zimmer_pflanze_1x2_64x128_09.png", true);
+  prop(map, 3, 5, "moebel_zimmer_pflanze_1x1_64x64_03.png", false);
+  prop(map, 8, 5, "moebel_zimmer_pflanze_1x1_64x64_07.png", false);
+  prop(map, 12, 5, "moebel_zimmer_pflanze_2x2_128x128_11.png", true);
+  prop(map, 1, 8, "moebel_zimmer_pflanze_1x2_64x128_02.png", true);
+  prop(map, 7, 8, "moebel_zimmer_pflanze_1x1_64x64_07.png", false);
+  prop(map, 10, 7, "moebel_zimmer_pflanze_2x1_128x64_03.png", true);
+  prop(map, 12, 8, "moebel_zimmer_pflanze_1x1_64x64_03.png", false);
+  prop(map, 6, 6, "dorf_1x2_64x128_05.png", true, "Kammer. Nach Süden durch die Tür zurück in die Stadt.");
+  prop(map, 8, 8, "figuren_buerger_anim_lauf_1x2_64x128_19.png", true, "Die Zimmerpflanzen bleiben im Haus. Draußen ist die neue Stadt.");
+  return finish(map);
 }
 
 function anger(): TownMap {
@@ -235,6 +325,8 @@ function stube(): TownMap {
 }
 
 export function buildPlace(id: PlaceId): TownMap {
+  if (id === "stadt") return stadt();
+  if (id === "kammer") return kammer();
   if (id === "teich") return teich();
   if (id === "stube") return stube();
   return anger();

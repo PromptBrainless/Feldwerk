@@ -1,6 +1,6 @@
 # Assets
 
-473 Einzelbilder unter `src/rpg/assets/dorf/`, geschnitten mit Kachel 64. Volle Bögen liegen nur als Quelle, nicht noch einmal im Ergebnis. Die Leiste darf nie den ganzen Katalog auf einmal einhängen oder dekodieren, sonst hängt die Oberfläche.
+505 Einzelbilder unter `src/rpg/assets/dorf/`, geschnitten mit Kachel 64. Die ersten 473 behalten ihre Ids. 32 neue Kacheln liegen unter `zz/` (sortiert ganz am Ende): Lichtung, Stadt-Pflaster, Erdweg, Holzschwelle, fünf Häuser, Waldrand-Hecken, Pflanzen, Zimmerpflanzen. `zz` ist nur die Sortierung; die Gruppe nimmt der Ordner dahinter. Volle Bögen liegen nur als Quelle, nicht noch einmal im Ergebnis. Die Leiste darf nie den ganzen Katalog auf einmal einhängen oder dekodieren, sonst hängt die Oberfläche.
 
 ## Katalog
 

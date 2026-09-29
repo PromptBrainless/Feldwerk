@@ -4,7 +4,7 @@ import { createEmptyGameState } from "../runtime/GameState.ts";
 import { DIR_DELTA, dirFromCode, tryStep } from "../runtime/movement.ts";
 import { inBounds, isBlocked, isBlockingGround, layer, MAP_MAX, MAP_MIN, normalizeMap, resizeMap, spanKey } from "../runtime/tilemap.ts";
 import { MAP_H, MAP_W, START, buildTown } from "../runtime/town.ts";
-import { buildPlace, type PlaceId } from "./places.ts";
+import { buildPlace, PLACES, type PlaceId } from "./places.ts";
 import {
   GroundId,
   ObjectId,
@@ -215,8 +215,8 @@ export function createSim(): Sim {
     groundSolid: false,
     tile: DEFAULT_TILE,
     blockOn: true,
-    map: buildPlace("anger"),
-    game: createEmptyGameState("anger"),
+    map: buildPlace("stadt"),
+    game: createEmptyGameState("stadt"),
     player: makePlayer(),
     dialog: null,
     talk: null,
@@ -329,10 +329,11 @@ type SavedTown = {
   blockingGrounds?: number[];
   switches?: Record<string, boolean>;
   muted?: boolean;
+  exits?: Record<string, string>;
 };
 
-const WORLD = 3;
-const FRESH_NAMES = new Set(["Anger", "Teich", "Stube", "Beispielstadt"]);
+const WORLD = 4;
+const FRESH_NAMES = new Set(["Stadt", "Kammer", "Anger", "Teich", "Stube", "Beispielstadt"]);
 
 function applySaved(sim: Sim, data: SavedTown) {
   const width = Math.max(MAP_MIN, Math.min(MAP_MAX, Math.round(data.width ?? MAP_W)));
@@ -346,6 +347,7 @@ function applySaved(sim: Sim, data: SavedTown) {
   sim.map.messages = data.messages ?? {};
   sim.map.spans = data.spans ?? {};
   sim.map.blockingGrounds = data.blockingGrounds ?? [GroundId.water];
+  sim.map.exits = data.exits ?? {};
   normalizeMap(sim.map);
   if (typeof data.name === "string" && data.name.trim()) sim.map.name = data.name.slice(0, 40);
   sim.game.switches = data.switches ?? {};
@@ -382,6 +384,7 @@ export function saveTown(sim: Sim) {
       messages: sim.map.messages,
       spans: sim.map.spans,
       blockingGrounds: sim.map.blockingGrounds,
+      exits: sim.map.exits ?? {},
       switches: sim.game.switches,
       muted: sim.muted,
     };
@@ -464,6 +467,13 @@ function beginMove(sim: Sim, dir: Dir) {
   player.moving = true;
 }
 
+function takeExit(sim: Sim): boolean {
+  const to = sim.map.exits?.[`${sim.player.x},${sim.player.y}`];
+  if (!to || !PLACES.some((place) => place.id === to)) return false;
+  openPlace(sim, to as PlaceId);
+  return true;
+}
+
 function arrive(sim: Sim, extra: number) {
   const player = sim.player;
   player.x = player.toX;
@@ -471,6 +481,7 @@ function arrive(sim: Sim, extra: number) {
   player.moving = false;
   player.t = 0;
   tone(sim, 160 + (player.x + player.y) * 3, 0.04, 0.018);
+  if (takeExit(sim)) return;
   const dir = currentDir(sim);
   if (!dir || sim.dialog || sim.mode !== "play") return;
   const next = tryStep((x, y) => isBlocked(sim.map, x, y), player.x, player.y, dir);

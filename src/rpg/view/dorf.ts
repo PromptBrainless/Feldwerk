@@ -88,7 +88,9 @@ function labelFor(path: string): string {
 
 function meta(path: string): Pick<StockBrush, "group" | "kind" | "solid" | "talk" | "w" | "h"> {
   const parts = path.split("/");
-  const top = parts[parts.indexOf("dorf") + 1] ?? "";
+  const dorfAt = parts.indexOf("dorf");
+  let top = parts[dorfAt + 1] ?? "";
+  if (top === "zz") top = parts[dorfAt + 2] ?? "";
   const size = parts[parts.length - 2] ?? "";
   const match = size.match(/^(\d+)x(\d+)_/);
   const w = Math.min(8, Math.max(1, match ? Number(match[1]) : 1));

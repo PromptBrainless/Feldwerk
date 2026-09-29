@@ -53,6 +53,8 @@ export type TownMap = {
   spans: Record<string, Span>;
   /** Boden-IDs, die den Schritt sperren. Wasser ist immer dabei. */
   blockingGrounds: number[];
+  /** Zelle „x,y“ → Ort, der beim Betreten öffnet. */
+  exits?: Record<string, string>;
 };
 
 export type SwitchMap = Record<string, boolean>;

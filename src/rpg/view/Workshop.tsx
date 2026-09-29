@@ -210,7 +210,7 @@ export function Workshop() {
     window.addEventListener("resize", onResizeRows);
     let raf = 0;
     let last = performance.now();
-    let pub = { dialog: null as string | null, read: false, undos: 0 };
+    let pub = { dialog: null as string | null, read: false, undos: 0, name: sim.map.name, mapW: sim.map.width, mapH: sim.map.height };
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
@@ -218,8 +218,18 @@ export function Workshop() {
       const ctx = canvas.getContext("2d");
       if (ctx) draw(ctx, sim);
       const nextRead = Boolean(sim.game.switches.sawSign);
-      if (sim.dialog !== pub.dialog || nextRead !== pub.read || sim.undo.length !== pub.undos) {
-        pub = { dialog: sim.dialog, read: nextRead, undos: sim.undo.length };
+      if (
+        sim.dialog !== pub.dialog ||
+        nextRead !== pub.read ||
+        sim.undo.length !== pub.undos ||
+        sim.map.name !== pub.name ||
+        sim.map.width !== pub.mapW ||
+        sim.map.height !== pub.mapH
+      ) {
+        if (sim.map.name !== pub.name) setName(sim.map.name);
+        if (sim.map.width !== pub.mapW) setMapW(sim.map.width);
+        if (sim.map.height !== pub.mapH) setMapH(sim.map.height);
+        pub = { dialog: sim.dialog, read: nextRead, undos: sim.undo.length, name: sim.map.name, mapW: sim.map.width, mapH: sim.map.height };
         setDialog(sim.dialog);
         setRead(nextRead);
         setUndos(sim.undo.length);
@@ -500,11 +510,17 @@ export function Workshop() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         />
-        <p className="pointer-events-none absolute left-3 top-3 hidden rounded-full bg-panel/90 px-3 py-1 text-sm text-ink-soft sm:block">
+        <p
+          className={`pointer-events-none absolute left-3 top-3 max-w-[16rem] rounded-full bg-panel/90 px-3 py-1 text-sm text-ink-soft ${name === "Stadt" || name === "Kammer" ? "" : "hidden sm:block"}`}
+        >
           {mode === "play"
             ? paused
               ? "Pause. P setzt fort."
-              : "WASD oder Pfeile. Leertaste spricht. 1 Spielen, 2 Zeichnen."
+              : name === "Stadt"
+                ? "Holzschwelle links vor dem kleinen Haus: das ist die Tür in die Kammer."
+                : name === "Kammer"
+                  ? "Nach Süden durch die Tür zurück in die Stadt."
+                  : "WASD oder Pfeile. Leertaste spricht. 1 Spielen, 2 Zeichnen."
             : "Pinsel malt. Hand verschiebt die Sicht. Maße klappen die Kartengröße auf."}
         </p>
         {mode === "play" && (
