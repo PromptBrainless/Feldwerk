@@ -33,6 +33,8 @@ import { LibrarySheet } from "./LibrarySheet.tsx";
 import { STOCK, type StockGroup } from "./stock.ts";
 import { DORF, loadDorfSrc } from "./dorf.ts";
 import { PLACES } from "./places.ts";
+import { LEISTE, aliasGroup, resolveLeiste, type LeisteItem } from "./katalog.ts";
+import { pivotOf } from "./pivot.ts";
 
 const GROUNDS = [
   { id: GroundId.grass, label: "Gras", src: artUrls.grass, solid: false },
@@ -54,13 +56,14 @@ const OBJECTS = [
   { id: ObjectId.well, label: "Brunnen", src: artUrls.well, w: 1, h: 1, solid: true, talk: true },
 ];
 
-type Palette = "boden" | "dorf" | "eigen" | "alle" | StockGroup;
+type Palette = "boden" | "dorf" | "eigen" | "alle" | "leiste" | StockGroup;
 
 const LIBRARY = [...STOCK, ...DORF];
 const STRIDE = 64;
 
 const PALETTES: { id: Palette; label: string }[] = [
   { id: "alle", label: "Alle" },
+  { id: "leiste", label: "Leiste" },
   { id: "boden", label: "Boden" },
   { id: "dorf", label: "Dorf" },
   { id: "wasser", label: "Wasser" },
@@ -108,6 +111,7 @@ export function Workshop() {
   const [moreAssets, setMoreAssets] = useState(true);
   const [assetRows, setAssetRows] = useState(3);
   const [cell, setCell] = useState<{ x: number; y: number } | null>(null);
+  const [leisteId, setLeisteId] = useState<string | null>(null);
 
   sim.mode = mode;
   sim.tool = tool;
@@ -119,6 +123,7 @@ export function Workshop() {
   sim.groundSolid = groundSolid;
 
   const pickBrush = (brush: CustomBrush) => {
+    setLeisteId(null);
     setTool("brush");
     if (brush.kind === "ground") {
       setLayer("ground");
@@ -130,6 +135,27 @@ export function Workshop() {
       setFootW(brush.w);
       setFootH(brush.h);
       setStampSolid(brush.solid);
+      setStampTalk(brush.talk);
+    }
+    void ensureBrushImage(sim, brush);
+  };
+
+  const pickLeiste = (item: LeisteItem) => {
+    const brush = resolveLeiste(item);
+    if (!brush) return;
+    const overlay = item.overlay || (item.stand_b === 0 && item.stand_s === 0);
+    setLeisteId(item.id);
+    setTool("brush");
+    if (brush.kind === "ground") {
+      setLayer("ground");
+      setGroundBrush(brush.id);
+      setGroundSolid(!overlay && brush.solid);
+    } else {
+      setLayer("object");
+      setObjectBrush(brush.id);
+      setFootW(item.stand_b > 0 ? item.stand_b : brush.w);
+      setFootH(item.stand_s > 0 ? item.stand_s : brush.h);
+      setStampSolid(!overlay && brush.solid);
       setStampTalk(brush.talk);
     }
     void ensureBrushImage(sim, brush);
@@ -264,6 +290,7 @@ export function Workshop() {
           selected: groundBrush === entry.id,
           fit: "cover",
           onPick: () => {
+            setLeisteId(null);
             setTool("brush");
             setLayer("ground");
             setGroundBrush(entry.id);
@@ -281,6 +308,7 @@ export function Workshop() {
           selected: objectBrush === entry.id,
           fit: "contain",
           onPick: () => {
+            setLeisteId(null);
             setTool("brush");
             setLayer("object");
             setObjectBrush(entry.id);
@@ -317,7 +345,23 @@ export function Workshop() {
         });
       }
     }
-    if (palette !== "dorf" && palette !== "eigen" && palette !== "alle") {
+    if (palette === "leiste") {
+      for (const item of LEISTE) {
+        const brush = resolveLeiste(item);
+        if (!brush) continue;
+        const dorf = item.source === "dorf";
+        list.push({
+          key: item.id,
+          label: `${item.id} ${item.label}`,
+          src: dorf ? shown[brush.id] || brush.src || undefined : brush.src,
+          lazyId: dorf ? brush.id : undefined,
+          selected: leisteId === item.id,
+          fit: brush.kind === "ground" ? "cover" : "contain",
+          onPick: () => pickLeiste(item),
+        });
+      }
+    }
+    if (palette !== "dorf" && palette !== "eigen" && palette !== "alle" && palette !== "leiste") {
       for (const brush of STOCK) {
         if (brush.group !== palette) continue;
         list.push({
@@ -343,7 +387,21 @@ export function Workshop() {
       }
     }
     return list;
-  }, [palette, groundBrush, objectBrush, customs, shown, footW, footH]);
+  }, [palette, groundBrush, objectBrush, customs, shown, footW, footH, leisteId]);
+
+  const leisteItem = leisteId ? aliasGroup(leisteId) : undefined;
+  const leisteBrush = leisteItem ? resolveLeiste(leisteItem) : undefined;
+  const leistePivot = leisteBrush
+    ? leisteBrush.pivot_px != null && leisteBrush.pivot_py != null
+      ? { pivot_px: leisteBrush.pivot_px, pivot_py: leisteBrush.pivot_py }
+      : pivotOf(leisteBrush.w, leisteBrush.h, leisteBrush.kind, leisteBrush.solid, leisteBrush.group)
+    : undefined;
+  const activeName = leisteItem
+    ? `${leisteItem.id} ${leisteItem.label}`
+    : (layer === "ground" ? GROUNDS : OBJECTS).find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+      LIBRARY.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+      customs.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+      "";
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-parchment text-ink">
@@ -496,15 +554,35 @@ export function Workshop() {
             </IconChip>
           </div>
         )}
-        {mode === "draw" && cell && (
-          <aside className="absolute right-3 top-3 z-10 hidden w-56 rounded-2xl border border-line bg-panel/95 p-3 text-sm md:block">
-            <p className="font-medium text-ink">
-              Zelle {cell.x}, {cell.y}
-            </p>
-            <p className="mt-1 text-ink-soft">Boden · {brushName(tileAt(sim.map, "ground", cell.x, cell.y), customs)}</p>
-            <p className="text-ink-soft">Objekt · {objectName(sim, cell.x, cell.y, customs)}</p>
-            <p className="text-ink-soft">Spruch · {sim.map.messages[`${cell.x},${cell.y}`] || "keiner"}</p>
-            <p className="text-ink-soft">{tileAt(sim.map, "collision", cell.x, cell.y) ? "Blockiert" : "Begehbar"}</p>
+        {mode === "draw" && (cell || leisteItem) && (
+          <aside className="absolute right-3 top-3 z-10 hidden w-60 rounded-2xl border border-line bg-panel/95 p-3 text-sm md:block">
+            {cell && (
+              <>
+                <p className="font-medium text-ink">
+                  Zelle {cell.x}, {cell.y}
+                </p>
+                <p className="mt-1 text-ink-soft">Boden · {brushName(tileAt(sim.map, "ground", cell.x, cell.y), customs)}</p>
+                <p className="text-ink-soft">Objekt · {objectName(sim, cell.x, cell.y, customs)}</p>
+                <p className="text-ink-soft">Spruch · {sim.map.messages[`${cell.x},${cell.y}`] || "keiner"}</p>
+                <p className="text-ink-soft">{tileAt(sim.map, "collision", cell.x, cell.y) ? "Blockiert" : "Begehbar"}</p>
+              </>
+            )}
+            {leisteItem && (
+              <div className={cell ? "mt-2 border-t border-line pt-2" : undefined}>
+                <p className="font-medium text-ink">
+                  {leisteItem.id} · {leisteItem.label}
+                </p>
+                <p className="text-ink-soft">
+                  Pivot {leistePivot ? `${leistePivot.pivot_px},${leistePivot.pivot_py}` : "—"}
+                </p>
+                <p className="text-ink-soft">
+                  Stand {leisteItem.stand_b === 0 && leisteItem.stand_s === 0 ? "Overlay" : `${leisteItem.stand_b}×${leisteItem.stand_s}`}
+                </p>
+                <p className="text-ink-soft">
+                  Tür {leisteItem.tuer_dx == null ? "keine" : `${leisteItem.tuer_dx},${leisteItem.tuer_dy}`}
+                </p>
+              </div>
+            )}
           </aside>
         )}
 
@@ -560,6 +638,7 @@ export function Workshop() {
               sim.customs = [...sim.customs, brush];
               setCustoms([...sim.customs]);
               setTool("brush");
+              setLeisteId(null);
               if (brush.kind === "ground") {
                 setLayer("ground");
                 setGroundBrush(brush.id);
@@ -660,19 +739,14 @@ export function Workshop() {
                   setPalette(entry.id);
                   setTool("brush");
                   if (entry.id === "boden") setLayer("ground");
-                  else if (entry.id !== "eigen") setLayer("object");
+                  else if (entry.id !== "eigen" && entry.id !== "leiste") setLayer("object");
                 }}
                 className={`h-11 shrink-0 rounded-full px-3 text-sm ${palette === entry.id ? "bg-moss text-parchment" : "border border-line bg-parchment text-ink"}`}
               >
                 {entry.label}
               </button>
             ))}
-            <span className="shrink-0 text-sm text-ink-soft">
-              {(layer === "ground" ? GROUNDS : OBJECTS).find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                LIBRARY.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                customs.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                ""}
-            </span>
+            <span className="shrink-0 text-sm text-ink-soft">{activeName}</span>
           </div>
           {tool === "brush" && (
           <>
@@ -686,12 +760,7 @@ export function Workshop() {
               {moreAssets ? "Weniger" : "Mehr"}
             </button>
             <span className="shrink-0 text-sm text-ink-soft">{chips.length} Bilder</span>
-            <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">
-              {(layer === "ground" ? GROUNDS : OBJECTS).find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                LIBRARY.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                customs.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
-                ""}
-            </span>
+            <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">{activeName}</span>
             <button
               type="button"
               onClick={() => setLibraryOpen(true)}
