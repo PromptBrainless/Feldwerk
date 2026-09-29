@@ -1,4 +1,5 @@
 import type { StockBrush } from "./stock.ts";
+import { pivotOf } from "./pivot.ts";
 
 const loaders = import.meta.glob("../assets/dorf/**/*.png", {
   import: "default",
@@ -108,6 +109,7 @@ function meta(path: string): Pick<StockBrush, "group" | "kind" | "solid" | "talk
 
 export const DORF: StockBrush[] = paths.map((path, index) => {
   const brush = meta(path);
+  const pivot = pivotOf(brush.w, brush.h, brush.kind, brush.solid, brush.group);
   return {
     id: 300 + index,
     group: brush.group,
@@ -118,6 +120,7 @@ export const DORF: StockBrush[] = paths.map((path, index) => {
     w: brush.w,
     h: brush.h,
     src: "",
+    ...pivot,
   };
 });
 
