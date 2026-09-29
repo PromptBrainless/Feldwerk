@@ -26,7 +26,7 @@ Projektregeln für Grok Build: [`AGENTS.project.md`](../../AGENTS.project.md).
 
 ## Bestehende Modi (Live)
 
-Die aktuelle App trennt bereits **Spielen**, **Zeichnen** und **Reden**. Der Master-Prompt erweitert das auf:
+Die aktuelle App trennt bereits **Spielen**, **Zeichnen** und **Reden**. Was davon gebaut ist: [Ist-Stand](../stand.md). Der Master-Prompt erweitert das auf:
 
 `PLAY` · `BUILD` · `DRAW` · `WORLD` · `ASSETS`
 

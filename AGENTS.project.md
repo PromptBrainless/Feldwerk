@@ -1,6 +1,6 @@
 # Feldwerk — Projektanweisungen
 
-Gilt zusätzlich zu `AGENTS.md`. Bei UI-Arbeit zuerst die HUD-Doku lesen.
+Gilt zusätzlich zu `AGENTS.md`. Bei UI-Arbeit zuerst die HUD-Doku lesen. Der gebaute Stand steht in `docs/stand.md`, die Orte in `docs/spielwelt.md`, die Bilder in `docs/assets.md`.
 
 ## Produkt
 
@@ -23,10 +23,14 @@ Bestehende Live-Modi: **Spielen**, **Zeichnen**, **Reden**. Erweitern, nicht weg
 - Workspace bleibt dominant. HUD und Inspector nur kontextuell.
 - Progressive Disclosure: lieber 5 Controls als 20.
 - Brand: vierzackiger Spark, Blau→Violett, dunkle ruhige Fläche, kein Neon-Slop, kein Glassmorphism-Overkill.
-- „Reden“ → Creative Assistant mit Workspace-Kontext und Apply/Cancel. Keine stillen destruktiven Änderungen.
-- Mobile von Anfang an: Bottom-Nav, Sheets, Touch ≥ 44px, kein Horizontal-Scroll.
+- „Reden“ → Creative Assistant mit Workspace-Kontext und Apply/Cancel. Keine stillen destruktiven Änderungen. Bis Phase 10 bleibt Reden das Gespräch mit der Zelle davor.
+- Mobile von Anfang an: Bottom-Nav, Sheets, Touch ≥ 44px, kein Horizontal-Scroll der Seite. Die Asset-Leiste scrollt in sich.
 - Auth/DB bleiben aus, solange der User keine Accounts oder geteilte Persistenz verlangt.
+- Nie den ganzen Dorfkatalog auf einmal mounten oder dekodieren. Nur das sichtbare Fenster, plus die Bilder der aktuellen Karte.
+- Dateinamen nicht als Motiv glauben. Rohre, Bäume und Häuser sind in `docs/assets.md` festgehalten.
+- `buildTown()` und `logic.test.ts` nicht nebenbei ändern.
+- Kollision im Spiel ist ein Farbblitz, kein Versatz. Im Zeichnen ein violetter Schleier, keine Kreuze.
 
 ## Reihenfolge
 
-Nicht die Phasen 2–12 in einem Turn erzwingen. Nächsten sinnvollen Schritt aus `docs/hud-ui/phasenplan.md` liefern und im Browser prüfen.
+Nicht die Phasen 2–12 in einem Turn erzwingen. Nächsten sinnvollen Schritt aus `docs/hud-ui/phasenplan.md` liefern und im Browser prüfen. Was schon da ist: `docs/stand.md`.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eraser, Hand, ImagePlus, Pencil, RotateCcw, Shield, Undo2, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eraser, Hand, ImagePlus, Maximize2, Pause, Pencil, Play, RotateCcw, Shield, Undo2, Volume2, VolumeX } from "lucide-react";
 import { ObjectId, GroundId } from "../runtime/types.ts";
-import { FOOT_MAX, MAP_MAX, MAP_MIN } from "../runtime/tilemap.ts";
+import { FOOT_MAX, MAP_MAX, MAP_MIN, spanAt, tileAt } from "../runtime/tilemap.ts";
 import { artUrls } from "./assets.ts";
 import {
   applyStroke,
@@ -17,6 +17,7 @@ import {
   pointerTile,
   resetTown,
   resizeTown,
+  restartPlay,
   saveTown,
   setTilePx,
   step,
@@ -53,12 +54,13 @@ const OBJECTS = [
   { id: ObjectId.well, label: "Brunnen", src: artUrls.well, w: 1, h: 1, solid: true, talk: true },
 ];
 
-type Palette = "boden" | "dorf" | "eigen" | StockGroup;
+type Palette = "boden" | "dorf" | "eigen" | "alle" | StockGroup;
 
 const LIBRARY = [...STOCK, ...DORF];
 const STRIDE = 64;
 
 const PALETTES: { id: Palette; label: string }[] = [
+  { id: "alle", label: "Alle" },
   { id: "boden", label: "Boden" },
   { id: "dorf", label: "Dorf" },
   { id: "wasser", label: "Wasser" },
@@ -80,7 +82,7 @@ export function Workshop() {
   const [mode, setMode] = useState<"play" | "draw">("play");
   const [tool, setTool] = useState<PaintTool>("brush");
   const [layer, setLayer] = useState<PaintLayer>("ground");
-  const [palette, setPalette] = useState<Palette>("dorf");
+  const [palette, setPalette] = useState<Palette>("alle");
   const [groundBrush, setGroundBrush] = useState<number>(GroundId.path);
   const [objectBrush, setObjectBrush] = useState<number>(ObjectId.tree);
   const [name, setName] = useState(sim.map.name);
@@ -100,6 +102,12 @@ export function Workshop() {
   const [undos, setUndos] = useState(0);
   const [muted, setMuted] = useState(false);
   const [shown, setShown] = useState<Record<number, string>>({});
+  const [paused, setPaused] = useState(false);
+  const [debugOn, setDebugOn] = useState(false);
+  const [showMeasure, setShowMeasure] = useState(false);
+  const [moreAssets, setMoreAssets] = useState(true);
+  const [assetRows, setAssetRows] = useState(3);
+  const [cell, setCell] = useState<{ x: number; y: number } | null>(null);
 
   sim.mode = mode;
   sim.tool = tool;
@@ -153,6 +161,27 @@ export function Workshop() {
     if (canvas.parentElement) observer.observe(canvas.parentElement);
 
     const detach = attachInput(sim);
+    const onChromeKey = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.code === "Digit1") setMode("play");
+      if (event.code === "Digit2") setMode("draw");
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        const root = document.documentElement;
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void root.requestFullscreen().catch(() => undefined);
+      }
+      if (event.code === "KeyP" && sim.mode === "play") {
+        sim.paused = !sim.paused;
+        setPaused(sim.paused);
+      }
+    };
+    window.addEventListener("keydown", onChromeKey);
+    const onResizeRows = () => setAssetRows(window.innerWidth >= 800 && window.innerHeight >= 820 ? 4 : 3);
+    onResizeRows();
+    window.addEventListener("resize", onResizeRows);
     let raf = 0;
     let last = performance.now();
     let pub = { dialog: null as string | null, read: false, undos: 0 };
@@ -178,6 +207,8 @@ export function Workshop() {
       cancelAnimationFrame(raf);
       observer.disconnect();
       detach();
+      window.removeEventListener("keydown", onChromeKey);
+      window.removeEventListener("resize", onResizeRows);
     };
   }, [sim]);
 
@@ -198,6 +229,8 @@ export function Workshop() {
 
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     sim.hover = pointerTile(sim, event.currentTarget, event.clientX, event.clientY);
+    const next = sim.hover;
+    setCell((prev) => (prev?.x === next?.x && prev?.y === next?.y ? prev : next));
     if (pan.current) {
       sim.cam.x = pan.current.camX - (event.clientX - pan.current.x);
       sim.cam.y = pan.current.camY - (event.clientY - pan.current.y);
@@ -271,7 +304,20 @@ export function Workshop() {
         });
       }
     }
-    if (palette !== "dorf" && palette !== "eigen") {
+    if (palette === "alle") {
+      for (const brush of DORF) {
+        list.push({
+          key: `dorf-${brush.id}`,
+          label: brush.label,
+          src: shown[brush.id] || brush.src || undefined,
+          lazyId: brush.id,
+          selected: brush.kind === "ground" ? groundBrush === brush.id : objectBrush === brush.id,
+          fit: brush.kind === "ground" ? "cover" : "contain",
+          onPick: () => pickBrush(brush),
+        });
+      }
+    }
+    if (palette !== "dorf" && palette !== "eigen" && palette !== "alle") {
       for (const brush of STOCK) {
         if (brush.group !== palette) continue;
         list.push({
@@ -303,7 +349,13 @@ export function Workshop() {
     <main className="flex h-dvh flex-col overflow-hidden bg-parchment text-ink">
       <header className="shrink-0 border-b border-line bg-panel">
         <div className="flex min-h-14 items-center gap-2 px-3 py-2">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-parchment-deep text-moss" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="h-5 w-5">
+              <path fill="currentColor" d="M12 1.2 14.4 9.6 22.8 12 14.4 14.4 12 22.8 9.6 14.4 1.2 12 9.6 9.6Z" />
+            </svg>
+          </span>
+          <div className="min-w-0">
           <p className="font-display text-lg leading-none tracking-tight">Feldwerk</p>
           <input
             aria-label="Name der Karte"
@@ -317,9 +369,10 @@ export function Workshop() {
             }}
             className="w-36 bg-transparent text-sm text-ink-soft outline-none"
           />
-          <p className="text-sm text-ink-soft">
+          <p className="hidden text-sm text-ink-soft sm:block">
             {mapW} × {mapH} · {tilePx} px
           </p>
+          </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {read && mode === "play" && (
@@ -357,7 +410,7 @@ export function Workshop() {
           </button>
         </div>
         </div>
-        <div className="flex gap-1 overflow-x-auto px-3 pb-2">
+        <div className="flex flex-wrap gap-1 px-3 pb-2">
           {PLACES.map((place) => (
             <button
               key={place.id}
@@ -389,11 +442,71 @@ export function Workshop() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         />
-        <p className="pointer-events-none absolute left-3 top-3 rounded-full bg-panel/90 px-3 py-1 text-sm text-ink-soft">
+        <p className="pointer-events-none absolute left-3 top-3 hidden rounded-full bg-panel/90 px-3 py-1 text-sm text-ink-soft sm:block">
           {mode === "play"
-            ? "WASD oder Pfeile. Leertaste spricht."
-            : "Karte, Fläche und eigene Grafiken stellst du unten ein."}
+            ? paused
+              ? "Pause. P setzt fort."
+              : "WASD oder Pfeile. Leertaste spricht. 1 Spielen, 2 Zeichnen."
+            : "Pinsel malt. Hand verschiebt die Sicht. Maße klappen die Kartengröße auf."}
         </p>
+        {mode === "play" && (
+          <div className="absolute right-3 top-3 z-10 flex gap-1">
+            <IconChip
+              label={paused ? "Weiter" : "Pause"}
+              pressed={paused}
+              onClick={() => {
+                sim.paused = !sim.paused;
+                setPaused(sim.paused);
+              }}
+            >
+              {paused ? <Play size={16} /> : <Pause size={16} />}
+            </IconChip>
+            <IconChip
+              label="Neu starten"
+              pressed={false}
+              onClick={() => {
+                restartPlay(sim);
+                setPaused(false);
+                setDialog(null);
+                setRead(false);
+              }}
+            >
+              <RotateCcw size={16} />
+            </IconChip>
+            <IconChip
+              label="Kollision"
+              pressed={debugOn}
+              onClick={() => {
+                sim.debug = !sim.debug;
+                setDebugOn(sim.debug);
+              }}
+            >
+              <Shield size={16} />
+            </IconChip>
+            <IconChip
+              label="Vollbild"
+              pressed={false}
+              onClick={() => {
+                const root = document.documentElement;
+                if (document.fullscreenElement) void document.exitFullscreen();
+                else void root.requestFullscreen().catch(() => undefined);
+              }}
+            >
+              <Maximize2 size={16} />
+            </IconChip>
+          </div>
+        )}
+        {mode === "draw" && cell && (
+          <aside className="absolute right-3 top-3 z-10 hidden w-56 rounded-2xl border border-line bg-panel/95 p-3 text-sm md:block">
+            <p className="font-medium text-ink">
+              Zelle {cell.x}, {cell.y}
+            </p>
+            <p className="mt-1 text-ink-soft">Boden · {brushName(tileAt(sim.map, "ground", cell.x, cell.y), customs)}</p>
+            <p className="text-ink-soft">Objekt · {objectName(sim, cell.x, cell.y, customs)}</p>
+            <p className="text-ink-soft">Spruch · {sim.map.messages[`${cell.x},${cell.y}`] || "keiner"}</p>
+            <p className="text-ink-soft">{tileAt(sim.map, "collision", cell.x, cell.y) ? "Blockiert" : "Begehbar"}</p>
+          </aside>
+        )}
 
         {dialog && (
           <div className="absolute inset-x-3 bottom-36 z-20 rounded-2xl border border-line bg-panel p-4 md:bottom-4 md:left-1/2 md:w-[34rem] md:-translate-x-1/2">
@@ -500,8 +613,8 @@ export function Workshop() {
               pressed={layer === "object"}
               onClick={() => {
                 setLayer("object");
-                setPalette("dorf");
                 setTool("brush");
+                setPalette((current) => (current === "boden" ? "alle" : current));
               }}
             />
             <span className="mx-1 h-6 w-px bg-line" />
@@ -535,6 +648,7 @@ export function Workshop() {
             >
               <RotateCcw size={16} />
             </button>
+            <ToolButton label="Maße" pressed={showMeasure} onClick={() => setShowMeasure((value) => !value)} />
           </div>
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {PALETTES.map((entry) => (
@@ -560,40 +674,60 @@ export function Workshop() {
                 ""}
             </span>
           </div>
-          <div className="flex w-full min-w-0 items-center gap-2 pb-1">
-            <VirtualSwatches chips={chips} onShow={setShown} />
+          {tool === "brush" && (
+          <>
+          <div className="flex items-center gap-2 pb-1">
+            <button
+              type="button"
+              aria-pressed={moreAssets}
+              onClick={() => setMoreAssets((value) => !value)}
+              className={`h-11 shrink-0 rounded-full px-3 text-sm ${moreAssets ? "bg-moss text-parchment" : "border border-line bg-parchment text-ink"}`}
+            >
+              {moreAssets ? "Weniger" : "Mehr"}
+            </button>
+            <span className="shrink-0 text-sm text-ink-soft">{chips.length} Bilder</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-ink-soft">
+              {(layer === "ground" ? GROUNDS : OBJECTS).find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+                LIBRARY.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+                customs.find((entry) => entry.id === (layer === "ground" ? groundBrush : objectBrush))?.label ??
+                ""}
+            </span>
             <button
               type="button"
               onClick={() => setLibraryOpen(true)}
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-dashed border-line text-ink"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-dashed border-line text-ink"
               aria-label="Grafik hochladen"
             >
               <ImagePlus size={18} />
             </button>
-            {layer === "object" && (
-              <label className="flex min-w-48 flex-1 items-center gap-2 text-sm text-ink-soft">
-                Spruch
-                <input
-                  value={stamp}
-                  maxLength={140}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setStamp(value);
-                    sim.stampText = value;
-                    if (sim.hover) {
-                      const cell = `${sim.hover.x},${sim.hover.y}`;
-                      if (cell in sim.map.messages) {
-                        sim.map.messages[cell] = value;
-                        saveTown(sim);
-                      }
-                    }
-                  }}
-                  className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-parchment px-3 text-ink outline-none"
-                />
-              </label>
-            )}
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <VirtualSwatches chips={chips} rows={moreAssets ? assetRows : 1} onShow={setShown} />
+          {layer === "object" && (
+            <label className="mt-1 flex min-w-0 items-center gap-2 pb-1 text-sm text-ink-soft">
+              Spruch
+              <input
+                value={stamp}
+                maxLength={140}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setStamp(value);
+                  sim.stampText = value;
+                  if (sim.hover) {
+                    const cell = `${sim.hover.x},${sim.hover.y}`;
+                    if (cell in sim.map.messages) {
+                      sim.map.messages[cell] = value;
+                      saveTown(sim);
+                    }
+                  }
+                }}
+                className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-parchment px-3 text-ink outline-none"
+              />
+            </label>
+          )}
+          </>
+          )}
+          {showMeasure && (
+          <div className="flex flex-wrap items-center gap-2 pb-1">
             <span className="shrink-0 text-sm text-ink-soft">Karte</span>
             <Stepper
               label="Kartenbreite"
@@ -646,8 +780,19 @@ export function Workshop() {
               </>
             )}
           </div>
+          )}
         </section>
       )}
+      <footer className="flex h-9 shrink-0 items-center justify-between gap-3 border-t border-line bg-panel px-3 text-xs text-ink-soft">
+        <span>{mode === "play" && paused ? "Pause" : "Bereit"}</span>
+        <span className="min-w-0 truncate">
+          {name}
+          {cell ? ` · ${cell.x},${cell.y}` : ""}
+        </span>
+        <span>
+          {tilePx} px{debugOn ? " · Kollision" : ""}
+        </span>
+      </footer>
     </main>
   );
 }
@@ -662,20 +807,80 @@ type Chip = {
   onPick: () => void;
 };
 
-function VirtualSwatches({ chips, onShow }: { chips: Chip[]; onShow: (patch: (prev: Record<number, string>) => Record<number, string>) => void }) {
+function brushName(id: number, customs: CustomBrush[]) {
+  return (
+    GROUNDS.find((entry) => entry.id === id)?.label ??
+    LIBRARY.find((entry) => entry.id === id)?.label ??
+    customs.find((entry) => entry.id === id)?.label ??
+    "Unbekannt"
+  );
+}
+
+function objectName(sim: Sim, x: number, y: number, customs: CustomBrush[]) {
+  const covered = spanAt(sim.map, x, y);
+  const id = covered?.span.id ?? tileAt(sim.map, "objects", x, y);
+  if (!id || id === ObjectId.span || id === ObjectId.cottageFill) return "keins";
+  return (
+    OBJECTS.find((entry) => entry.id === id)?.label ??
+    LIBRARY.find((entry) => entry.id === id)?.label ??
+    customs.find((entry) => entry.id === id)?.label ??
+    "Objekt"
+  );
+}
+
+function IconChip({
+  label,
+  pressed,
+  onClick,
+  children,
+}: {
+  label: string;
+  pressed: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      onClick={onClick}
+      className={`grid h-11 w-11 place-items-center rounded-full border ${pressed ? "border-moss bg-moss text-parchment" : "border-line bg-panel text-ink"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function VirtualSwatches({
+  chips,
+  rows,
+  onShow,
+}: {
+  chips: Chip[];
+  rows: number;
+  onShow: (patch: (prev: Record<number, string>) => Record<number, string>) => void;
+}) {
   const scroller = useRef<HTMLDivElement>(null);
-  const [span, setSpan] = useState({ start: 0, end: 10 });
+  const [win, setWin] = useState({ cols: 8, start: 0, end: 24 });
   const signature = chips.map((chip) => chip.key).join("|");
 
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
     el.scrollLeft = 0;
+    el.scrollTop = 0;
     const measure = () => {
-      const start = Math.max(0, Math.floor(el.scrollLeft / STRIDE) - 2);
-      const visible = Math.ceil(el.clientWidth / STRIDE) + 5;
-      const end = Math.min(chips.length, start + visible);
-      setSpan((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+      const wide = rows === 1;
+      const cols = wide ? Math.max(chips.length, 1) : Math.max(1, Math.min(12, Math.floor(el.clientWidth / STRIDE)));
+      const start = wide
+        ? Math.max(0, Math.floor(el.scrollLeft / STRIDE) - 2)
+        : Math.max(0, Math.floor(el.scrollTop / STRIDE) - 1) * cols;
+      const end = wide
+        ? Math.min(chips.length, start + Math.ceil(el.clientWidth / STRIDE) + 5)
+        : Math.min(chips.length, start + (rows + 2) * cols);
+      setWin((prev) => (prev.cols === cols && prev.start === start && prev.end === end ? prev : { cols, start, end }));
     };
     measure();
     el.addEventListener("scroll", measure, { passive: true });
@@ -685,11 +890,11 @@ function VirtualSwatches({ chips, onShow }: { chips: Chip[]; onShow: (patch: (pr
       el.removeEventListener("scroll", measure);
       observer.disconnect();
     };
-  }, [signature, chips.length]);
+  }, [signature, chips.length, rows]);
 
   useEffect(() => {
     let live = true;
-    const ids = chips.slice(span.start, span.end).flatMap((chip) => (chip.lazyId != null && !chip.src ? [chip.lazyId] : []));
+    const ids = chips.slice(win.start, win.end).flatMap((chip) => (chip.lazyId != null && !chip.src ? [chip.lazyId] : []));
     if (ids.length === 0) return;
     void Promise.all(ids.map(async (id) => [id, await loadDorfSrc(id)] as const)).then((pairs) => {
       if (!live) return;
@@ -702,26 +907,38 @@ function VirtualSwatches({ chips, onShow }: { chips: Chip[]; onShow: (patch: (pr
     return () => {
       live = false;
     };
-  }, [signature, span.start, span.end, chips, onShow]);
+  }, [signature, win.start, win.end, chips, onShow]);
 
-  const slice = chips.slice(span.start, span.end);
+  const wide = rows === 1;
+  const cols = Math.max(1, win.cols);
+  const trackH = wide ? STRIDE : Math.ceil(chips.length / cols) * STRIDE;
+  const slice = chips.slice(win.start, win.end);
   return (
-    <div ref={scroller} className="min-w-0 flex-1 overflow-x-auto">
-      <div className="relative h-14" style={{ width: Math.max(chips.length, 1) * STRIDE }}>
-        {slice.map((chip, index) => (
-          <div key={chip.key} className="absolute top-0" style={{ left: (span.start + index) * STRIDE }}>
-            {chip.src ? (
-              <Swatch label={chip.label} src={chip.src} selected={chip.selected} fit={chip.fit} onPick={chip.onPick} />
-            ) : (
-              <button
-                type="button"
-                aria-label={chip.label}
-                onClick={chip.onPick}
-                className="block h-14 w-14 rounded-xl border border-line bg-parchment-deep"
-              />
-            )}
-          </div>
-        ))}
+    <div
+      ref={scroller}
+      className={`min-w-0 w-full ${wide ? "overflow-x-auto" : "overflow-y-scroll"}`}
+      style={{ height: wide ? STRIDE : rows * STRIDE }}
+    >
+      <div className="relative" style={{ width: wide ? Math.max(chips.length, 1) * STRIDE : cols * STRIDE, height: trackH }}>
+        {slice.map((chip, index) => {
+          const at = win.start + index;
+          const col = wide ? at : at % cols;
+          const row = wide ? 0 : Math.floor(at / cols);
+          return (
+            <div key={chip.key} className="absolute top-0" style={{ left: col * STRIDE, top: row * STRIDE }}>
+              {chip.src ? (
+                <Swatch label={chip.label} src={chip.src} selected={chip.selected} fit={chip.fit} onPick={chip.onPick} />
+              ) : (
+                <button
+                  type="button"
+                  aria-label={chip.label}
+                  onClick={chip.onPick}
+                  className="block h-14 w-14 rounded-xl border border-line bg-parchment-deep"
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -746,9 +963,9 @@ function Swatch({
       aria-label={label}
       aria-pressed={selected}
       onClick={onPick}
-      className={`grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border bg-parchment-deep ${selected ? "border-gold ring-2 ring-gold" : "border-line"}`}
+      className={`relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border bg-parchment-deep ${selected ? "border-gold ring-2 ring-gold" : "border-line"}`}
     >
-      <img src={src} alt="" className={fit === "cover" ? "h-full w-full object-cover" : "max-h-full max-w-full object-contain"} />
+      <img src={src} alt="" className={`absolute inset-0 h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`} />
     </button>
   );
 }

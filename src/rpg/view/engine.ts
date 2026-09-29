@@ -89,6 +89,8 @@ export type Sim = {
   before: Snap | null;
   strokeDirty: boolean;
   muted: boolean;
+  paused: boolean;
+  debug: boolean;
   framed: boolean;
   artState: "loading" | "ready" | "missing";
 };
@@ -237,6 +239,8 @@ export function createSim(): Sim {
     before: null,
     strokeDirty: false,
     muted: false,
+    paused: false,
+    debug: false,
     framed: false,
     artState: "loading",
   };
@@ -546,14 +550,16 @@ export function step(sim: Sim, dt: number) {
 
   const player = sim.player;
   if (sim.mode === "play") {
-    if (player.moving) {
-      player.t += capped;
-      player.walk += capped;
-      if (player.t >= STEP) arrive(sim, player.t - STEP);
-    } else if (!sim.dialog) {
-      const dir = currentDir(sim);
-      if (dir) beginMove(sim, dir);
-      else player.hitWall = false;
+    if (!sim.paused) {
+      if (player.moving) {
+        player.t += capped;
+        player.walk += capped;
+        if (player.t >= STEP) arrive(sim, player.t - STEP);
+      } else if (!sim.dialog) {
+        const dir = currentDir(sim);
+        if (dir) beginMove(sim, dir);
+        else player.hitWall = false;
+      }
     }
   } else {
     const dir = currentDir(sim);
@@ -565,7 +571,7 @@ export function step(sim: Sim, dt: number) {
   }
 
   if (player.bump > 0 && player.bump < 1) {
-    player.bump = Math.min(1, player.bump + capped / 0.14);
+    player.bump = Math.min(1, player.bump + capped / 0.28);
   }
 
   const vis = visualPlayer(player);
@@ -817,20 +823,19 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim) {
   }
 
   const vis = visualPlayer(sim.player);
-  const bumpAmp = Math.sin(Math.min(1, sim.player.bump) * Math.PI) * 7;
-  const bumpDelta = DIR_DELTA[sim.player.bumpDir];
+  const flash = sim.player.bump > 0 ? Math.sin(Math.min(1, sim.player.bump) * Math.PI) : 0;
   items.push({
     sort: (vis.y + 1) * TILE + 0.5,
     paint: () => {
-      const feetX = (vis.x + 0.5) * TILE - cam.x + bumpDelta.x * bumpAmp;
-      const feetY = (vis.y + 1) * TILE - cam.y + bumpDelta.y * bumpAmp;
+      const feetX = (vis.x + 0.5) * TILE - cam.x;
+      const feetY = (vis.y + 1) * TILE - cam.y;
       ctx.fillStyle = "rgba(28,25,21,0.22)";
       ctx.beginPath();
       ctx.ellipse(feetX, feetY - 2, TILE * 0.26, TILE * 0.11, 0, 0, Math.PI * 2);
       ctx.fill();
       const hero = sim.art?.hero;
       if (!hero) {
-        ctx.fillStyle = "#2f6b4f";
+        ctx.fillStyle = flash > 0.02 ? `rgba(214, 84, 72, ${0.45 + flash * 0.55})` : "#2f6b4f";
         ctx.beginPath();
         ctx.arc(feetX, feetY - TILE * 0.45, TILE * 0.28, 0, Math.PI * 2);
         ctx.fill();
@@ -842,7 +847,10 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim) {
       const row = ROW[sim.player.dir];
       const destH = TILE * 2.05;
       const destW = destH * (fw / fh);
+      ctx.save();
+      if (flash > 0.02) ctx.filter = `sepia(1) saturate(8) hue-rotate(-18deg) brightness(${1 + flash * 0.35})`;
       ctx.drawImage(hero, col * fw, row * fh, fw, fh, feetX - destW / 2, feetY - destH + 4, destW, destH);
+      ctx.restore();
     },
   });
 
@@ -868,20 +876,11 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim) {
     ctx.stroke();
 
     const collision = layer(sim.map, "collision").tiles;
-    ctx.fillStyle = WALNUT;
+    ctx.fillStyle = "rgba(109, 94, 252, 0.32)";
     for (let y = y0; y < y1; y += 1) {
       for (let x = x0; x < x1; x += 1) {
         if (!collision[y * sim.map.width + x]) continue;
-        const dx = x * TILE - cam.x;
-        const dy = y * TILE - cam.y;
-        ctx.fillRect(dx, dy, TILE, TILE);
-        ctx.strokeStyle = "rgba(107,70,50,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(dx + 8, dy + 8);
-        ctx.lineTo(dx + TILE - 8, dy + TILE - 8);
-        ctx.moveTo(dx + TILE - 8, dy + 8);
-        ctx.lineTo(dx + 8, dy + TILE - 8);
-        ctx.stroke();
+        ctx.fillRect(x * TILE - cam.x, y * TILE - cam.y, TILE, TILE);
       }
     }
 
@@ -897,6 +896,23 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim) {
         TILE * footW - 2,
         TILE * footH - 2,
       );
+    }
+  }
+
+  if (flash > 0.02 && sim.mode === "play") {
+    const hit = DIR_DELTA[sim.player.bumpDir];
+    ctx.fillStyle = `rgba(214, 84, 72, ${0.5 * flash})`;
+    ctx.fillRect((sim.player.x + hit.x) * TILE - cam.x, (sim.player.y + hit.y) * TILE - cam.y, TILE, TILE);
+  }
+
+  if (sim.debug && sim.mode === "play") {
+    const collision = layer(sim.map, "collision").tiles;
+    ctx.fillStyle = "rgba(109, 94, 252, 0.38)";
+    for (let y = y0; y < y1; y += 1) {
+      for (let x = x0; x < x1; x += 1) {
+        if (!collision[y * sim.map.width + x]) continue;
+        ctx.fillRect(x * TILE - cam.x, y * TILE - cam.y, TILE, TILE);
+      }
     }
   }
 
@@ -964,12 +980,21 @@ export async function loadPlacedImages(sim: Sim) {
   );
 }
 
+export function restartPlay(sim: Sim) {
+  sim.dialog = null;
+  sim.talk = null;
+  sim.paused = false;
+  parkPlayer(sim);
+  sim.framed = false;
+}
+
 export function openPlace(sim: Sim, id: PlaceId) {
   sim.map = buildPlace(id);
   sim.game = createEmptyGameState(id);
   sim.dialog = null;
   sim.talk = null;
   sim.undo = [];
+  sim.paused = false;
   parkPlayer(sim);
   sim.framed = false;
   saveTown(sim);
