@@ -8,10 +8,13 @@ Feldwerk soll sich wie ein **premium creative tool** anfühlen, nicht wie ein ge
 
 | Datei | Inhalt |
 | --- | --- |
-| [master-prompt.md](./master-prompt.md) | Vollständiger Master-Prompt (Abschnitte 1–35) |
+| [master-prompt.md](./master-prompt.md) | Master-Prompt Einstieg + Abschnitte 1–17 |
+| [master-prompt-teil-2.md](./master-prompt-teil-2.md) | Originalwortlaut Abschnitte 18–35 |
 | [kontext-hud.md](./kontext-hud.md) | Kontextuelles HUD, Modi, Shortcuts |
 | [phasenplan.md](./phasenplan.md) | Implementierungsreihenfolge + Abschluss-Check |
-| [../quellen/chatgpt-hud-ui-share.md](../quellen/chatgpt-hud-ui-share.md) | Bereinigtes Share-Original |
+| [../quellen/chatgpt-hud-ui-share.md](../quellen/chatgpt-hud-ui-share.md) | Share-Provenienz |
+
+Projektregeln für Grok Build: [`AGENTS.project.md`](../../AGENTS.project.md).
 
 ## Leitentscheidungen
 
@@ -28,18 +31,3 @@ Die aktuelle App trennt bereits **Spielen**, **Zeichnen** und **Reden**. Der Mas
 `PLAY` · `BUILD` · `DRAW` · `WORLD` · `ASSETS`
 
 „Reden“ wird zum kontextbezogenen Creative Assistant mit Apply/Cancel, keine stillen destruktiven Änderungen.
-
-## App-Shell (Desktop)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ TOP BAR                                                       │
-├────────────┼────────────────────────────────┼─────────────────┤
-│ Navigation │        MAIN WORKSPACE          │ Inspector       │
-│            │                                │ / Context       │
-├────────────┴────────────────────────────────┴─────────────────┤
-│ TOOLBAR / TIMELINE / STATUS                                   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-Klein: Sidebar = Drawer, Inspector = Bottom Sheet, Workspace bleibt nutzbar, Touch-Targets ≥ 44px.
