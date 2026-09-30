@@ -27,8 +27,8 @@ Quelle der Reihenfolge: [phasenplan.md](./hud-ui/phasenplan.md). Nicht alles auf
 | 3 Sidebar, Topbar, Workspace | nur Kopfzeile und Fußzeile, keine Sidebar |
 | 4 Play / Build / Draw / World | Spielen und Zeichnen. Kein World-Modus, kein Build-Modus |
 | 5 Kontext-Leiste | Zeichenwerkzeuge nur im Zeichnen, Spielknöpfe nur im Spielen |
-| 6 Inspector | Zellenkarte rechts, ab mittlerer Breite |
-| 7 Assets, Szenen, Ebenen | Palette und drei Orte. Kein Szenen- oder Ebenen-Manager |
+| 6 Inspector | Zellenkarte rechts, ab mittlerer Breite. Im Spielen Ort, Zelle, Blick und was vorne liegt; im Zeichnen Zelle, Ebene, Boden, Objekt und Spruch |
+| 7 Assets, Szenen, Ebenen | Palette und fünf Orte, Ebene (Boden/Objekt) steht im Inspector. Kein Szenen- oder Ebenen-Manager |
 | 8 Befehlspalette | nicht angefangen |
 | 9 Einstellungen | nicht angefangen. Tasten 1, 2, F, P gelten |
 | 10 Assistent | nicht angefangen. Reden bleibt Gespräch |
