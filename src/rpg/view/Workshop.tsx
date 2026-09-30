@@ -35,6 +35,8 @@ import { DORF, loadDorfSrc } from "./dorf.ts";
 import { PLACES } from "./places.ts";
 import { LEISTE, aliasGroup, resolveLeiste, type LeisteItem } from "./katalog.ts";
 import { pivotOf } from "./pivot.ts";
+import { computeSwatchWindow } from "./swatches.ts";
+import { dirLabel, messageAhead, playerCell } from "./inspector.ts";
 
 const GROUNDS = [
   { id: GroundId.grass, label: "Gras", src: artUrls.grass, solid: false },
@@ -112,6 +114,9 @@ export function Workshop() {
   const [assetRows, setAssetRows] = useState(3);
   const [cell, setCell] = useState<{ x: number; y: number } | null>(null);
   const [leisteId, setLeisteId] = useState<string | null>(null);
+  const [heroCell, setHeroCell] = useState({ x: sim.player.x, y: sim.player.y });
+  const [heroDir, setHeroDir] = useState(sim.player.dir);
+  const [ahead, setAhead] = useState<string | null>(null);
 
   sim.mode = mode;
   sim.tool = tool;
@@ -211,6 +216,7 @@ export function Workshop() {
     let raf = 0;
     let last = performance.now();
     let pub = { dialog: null as string | null, read: false, undos: 0, name: sim.map.name, mapW: sim.map.width, mapH: sim.map.height };
+    let heroPub = { x: Math.round(sim.player.x), y: Math.round(sim.player.y), dir: sim.player.dir, ahead: null as string | null };
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
@@ -233,6 +239,16 @@ export function Workshop() {
         setDialog(sim.dialog);
         setRead(nextRead);
         setUndos(sim.undo.length);
+      }
+      if (sim.mode === "play") {
+        const hero = playerCell(sim.player.x, sim.player.y);
+        const aheadText = sim.dialog ? heroPub.ahead : messageAhead(sim.map, sim.player.x, sim.player.y, sim.player.dir);
+        if (hero.x !== heroPub.x || hero.y !== heroPub.y || sim.player.dir !== heroPub.dir || aheadText !== heroPub.ahead) {
+          heroPub = { x: hero.x, y: hero.y, dir: sim.player.dir, ahead: aheadText };
+          setHeroCell({ x: hero.x, y: hero.y });
+          setHeroDir(sim.player.dir);
+          setAhead(aheadText);
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -570,6 +586,16 @@ export function Workshop() {
             </IconChip>
           </div>
         )}
+        {mode === "play" && (
+          <aside className="absolute right-3 top-16 z-10 hidden w-60 rounded-2xl border border-line bg-panel/95 p-3 text-sm md:block">
+            <p className="font-medium text-ink">Ort · {name}</p>
+            <p className="mt-1 text-ink-soft">
+              Zelle {heroCell.x}, {heroCell.y}
+            </p>
+            <p className="text-ink-soft">Blick · {dirLabel(heroDir)}</p>
+            <p className="text-ink-soft">Voraus · {ahead || "keiner"}</p>
+          </aside>
+        )}
         {mode === "draw" && (cell || leisteItem) && (
           <aside className="absolute right-3 top-3 z-10 hidden w-60 rounded-2xl border border-line bg-panel/95 p-3 text-sm md:block">
             {cell && (
@@ -577,7 +603,8 @@ export function Workshop() {
                 <p className="font-medium text-ink">
                   Zelle {cell.x}, {cell.y}
                 </p>
-                <p className="mt-1 text-ink-soft">Boden · {brushName(tileAt(sim.map, "ground", cell.x, cell.y), customs)}</p>
+                <p className="mt-1 text-ink-soft">Ebene · {layer === "ground" ? "Boden" : "Objekt"}</p>
+                <p className="text-ink-soft">Boden · {brushName(tileAt(sim.map, "ground", cell.x, cell.y), customs)}</p>
                 <p className="text-ink-soft">Objekt · {objectName(sim, cell.x, cell.y, customs)}</p>
                 <p className="text-ink-soft">Spruch · {sim.map.messages[`${cell.x},${cell.y}`] || "keiner"}</p>
                 <p className="text-ink-soft">{tileAt(sim.map, "collision", cell.x, cell.y) ? "Blockiert" : "Begehbar"}</p>
@@ -957,15 +984,15 @@ function VirtualSwatches({
     el.scrollLeft = 0;
     el.scrollTop = 0;
     const measure = () => {
-      const wide = rows === 1;
-      const cols = wide ? Math.max(chips.length, 1) : Math.max(1, Math.min(12, Math.floor(el.clientWidth / STRIDE)));
-      const start = wide
-        ? Math.max(0, Math.floor(el.scrollLeft / STRIDE) - 2)
-        : Math.max(0, Math.floor(el.scrollTop / STRIDE) - 1) * cols;
-      const end = wide
-        ? Math.min(chips.length, start + Math.ceil(el.clientWidth / STRIDE) + 5)
-        : Math.min(chips.length, start + (rows + 2) * cols);
-      setWin((prev) => (prev.cols === cols && prev.start === start && prev.end === end ? prev : { cols, start, end }));
+      const next = computeSwatchWindow({
+        clientWidth: el.clientWidth,
+        scrollLeft: el.scrollLeft,
+        scrollTop: el.scrollTop,
+        rows,
+        total: chips.length,
+        stride: STRIDE,
+      });
+      setWin((prev) => (prev.cols === next.cols && prev.start === next.start && prev.end === next.end ? prev : next));
     };
     measure();
     el.addEventListener("scroll", measure, { passive: true });
